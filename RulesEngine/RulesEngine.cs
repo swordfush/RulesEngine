@@ -6,6 +6,9 @@ namespace RulesEngine;
 /// <summary>
 /// Service that determines whether an object matches a set of rules.
 /// </summary>
+/// <remarks>
+/// Prefer <see cref="RulesEngine{T}"/> where the type is known as this caches the compilation of rules.
+/// </remarks>
 public class RulesEngine
 {
     private readonly IEnumerable<IRule> rules;
@@ -27,9 +30,8 @@ public class RulesEngine
     /// <returns>The list of rules that the object matches.</returns>
     public List<IRule> GetMatchingRules<T>(T value)
     {
-        if (value == null) return new List<IRule>();
-
-        return this.rules.Where(rule => MatchesRule(value, rule)).ToList();
+        var engine = new RulesEngine<T>(this.rules);
+        return engine.GetMatchingRules(value);
     }
 
     /// <summary>
@@ -41,16 +43,100 @@ public class RulesEngine
     /// <returns>True if the object matches the rule.</returns>
     public bool MatchesRule<T>(T value, IRule rule)
     {
+        var engine = new RulesEngine<T>(this.rules);
+        return engine.MatchesRule(value, rule);
+    }
+}
+
+/// <summary>
+/// Service that determines whether an object matches a set of rules.
+/// </summary>
+/// <typeparam name="T">The type of the objects to be checked.</typeparam>
+public class RulesEngine<T>
+{
+    private readonly IDictionary<IRule, Func<T, bool>> rules;
+
+    /// <summary>
+    /// Initialises the engine with a given set of rules.
+    /// </summary>
+    /// <param name="rules">The rules to assess objects against.</param>
+    public RulesEngine(IEnumerable<IRule> rules)
+    {
+        this.rules = rules.ToDictionary(r => r, r => CompileRule(r));
+    }
+
+    /// <summary>
+    /// Gets rules that the given object matches.
+    /// </summary>
+    /// <typeparam name="T">The type of the object.</typeparam>
+    /// <param name="value">The object to check for matching rules.</param>
+    /// <returns>The list of rules that the object matches. An empty list is returned if <paramref name="value"/> is null.</returns>
+    public List<IRule> GetMatchingRules(T value)
+    {
+        if (value == null) return new List<IRule>();
+
+        return this.rules
+            .Where(rule => rule.Value(value))
+            .Select(rule => rule.Key)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Determines whether the object matches the provided rule.
+    /// </summary>
+    /// <remarks>
+    /// Note: If the rule is not in the list of rules provided to the constructor, its compilation will not be cached.
+    /// </remarks>
+    /// <typeparam name="T">The type of the object.</typeparam>
+    /// <param name="value">The object to assess the rule against.</param>
+    /// <param name="rule">The rule that will be assessed for the object.</param>
+    /// <returns>True if the object matches the rule.</returns>
+    public bool MatchesRule(T value, IRule rule)
+    {
         if (rule == null) throw new ArgumentNullException(nameof(rule));
         if (value == null) return false;
 
-        return rule.Criteria.All(criterion => MatchesCriterion(value, criterion));
+        Func<T, bool> evaluator;
+        if (this.rules.ContainsKey(rule))
+        {
+            evaluator = this.rules[rule];
+        }
+        else
+        {
+            // If the rule isn't cached, compile it on the go
+            evaluator = CompileRule(rule);
+        }
+
+        return evaluator(value);
     }
 
-    private bool MatchesCriterion<T>(T value, IRuleCriterion criterion)
+    private Func<T, bool> CompileRule(IRule rule)
     {
-        var check = CompileCriterion<T>(criterion);
-        return check(value);
+        var parameterExpression = Expression.Parameter(typeof(T));
+
+        Expression body;
+        if (!rule.Criteria.Any())
+        {
+            body = Expression.Constant(true);
+        }
+        else
+        {
+            body = GetExpressionForCriterion(parameterExpression, rule.Criteria.First());
+
+            foreach (var criterion in rule.Criteria.Skip(1).ToList())
+            {
+                body = Expression.AndAlso(body, GetExpressionForCriterion(parameterExpression, criterion));
+            }
+        }
+
+        return Expression.Lambda<Func<T, bool>>(body, parameterExpression).Compile();
+    }
+
+    private Expression GetExpressionForCriterion(ParameterExpression parameterExpression, IRuleCriterion criterion)
+    {
+        // Expression is a binary operator in the form (<operator> (property (<parameter>) <propertyName>) <value>)
+        var propertyAccessExpression = GetExpressionForPropertyPath(parameterExpression, criterion.PropertyPath);
+        return GetBinaryOperatorExpression(criterion.OperatorName, propertyAccessExpression, criterion.Value);
     }
 
     /// <summary>
@@ -73,18 +159,8 @@ public class RulesEngine
         return (MemberExpression)objectExpression;
     }
 
-    private Func<T, bool> CompileCriterion<T>(IRuleCriterion criterion)
-    {
-        // Expression is a lambda, where the body is in the form (<operator> (property (<parameter>) <propertyName>) <value>)
-        var parameterExpression = Expression.Parameter(typeof(T));
-        var propertyAccessExpression = GetExpressionForPropertyPath(parameterExpression, criterion.PropertyPath);
-        var operatorExpression = GetBinaryOperatorExpression(criterion.OperatorName, propertyAccessExpression, criterion.Value);
-
-        return Expression.Lambda<Func<T, bool>>(body: operatorExpression, parameters: parameterExpression).Compile();
-    }
-
     /// <summary>
-    /// Gets a Expression for an operator.
+    /// Gets a Expression for an operator. Can be overriden to support additional operators.
     /// </summary>
     /// <param name="operatorName">The name of the operator.</param>
     /// <param name="objectExpression">An expression for the object to perform the operator on (as a property access expression).</param>
