@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		LICENSE.md = LICENSE.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RulesEngine.Benchmark", "RulesEngine.Benchmark\RulesEngine.Benchmark.csproj", "{70E30E7A-9D08-4ECD-B8D1-616240E12946}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,6 +30,10 @@ Global
 		{A65785F1-E080-4373-8613-3BBE241E9D37}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A65785F1-E080-4373-8613-3BBE241E9D37}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A65785F1-E080-4373-8613-3BBE241E9D37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70E30E7A-9D08-4ECD-B8D1-616240E12946}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70E30E7A-9D08-4ECD-B8D1-616240E12946}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70E30E7A-9D08-4ECD-B8D1-616240E12946}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70E30E7A-9D08-4ECD-B8D1-616240E12946}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

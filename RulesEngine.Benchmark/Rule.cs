@@ -1,0 +1,42 @@
+﻿using Bogus;
+using System.Collections;
+
+namespace RulesEngine.Benchmark;
+
+public class Rule : IRule, IEnumerable<IRuleCriterion>
+{
+    public string Name { get; set; }
+    public List<RuleCriterion> Criteria { get; set; }
+    IEnumerable<IRuleCriterion> IRule.Criteria { get => Criteria; }
+
+    public Rule()
+    {
+        Name = "";
+        Criteria = new List<RuleCriterion>();
+    }
+
+    public Rule(string name)
+    {
+        Name = name;
+        Criteria = new List<RuleCriterion>();
+    }
+
+    public Rule(string name, List<RuleCriterion> criteria)
+    {
+        Name = name;
+        Criteria = criteria;
+    }
+
+    public void Add(IRuleCriterion rule)
+        => this.Criteria.Add((rule as RuleCriterion) ?? throw new ArgumentException($"Rule must be of type {nameof(RuleCriterion)}."));
+
+    public IEnumerator<IRuleCriterion> GetEnumerator()
+        => Criteria.GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator()
+        => Criteria.GetEnumerator();
+
+    public static Faker<Rule> FakeData { get; } = new Faker<Rule>()
+        .RuleFor(r => r.Name, f => f.Lorem.Lines(1))
+        .RuleFor(r => r.Criteria, f => RuleCriterion.FakeData.Generate(10));
+}

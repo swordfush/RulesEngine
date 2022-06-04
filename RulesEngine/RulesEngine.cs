@@ -28,7 +28,7 @@ public class RulesEngine
     /// <typeparam name="T">The type of the object.</typeparam>
     /// <param name="value">The object to check for matching rules.</param>
     /// <returns>The list of rules that the object matches.</returns>
-    public List<IRule> GetMatchingRules<T>(T value)
+    public IEnumerable<IRule> GetMatchingRules<T>(T value)
     {
         var engine = new RulesEngine<T>(this.rules);
         return engine.GetMatchingRules(value);
@@ -71,7 +71,7 @@ public class RulesEngine<T>
     /// <typeparam name="T">The type of the object.</typeparam>
     /// <param name="value">The object to check for matching rules.</param>
     /// <returns>The list of rules that the object matches. An empty list is returned if <paramref name="value"/> is null.</returns>
-    public List<IRule> GetMatchingRules(T value)
+    public IEnumerable<IRule> GetMatchingRules(T value)
     {
         if (value == null) return new List<IRule>();
 
