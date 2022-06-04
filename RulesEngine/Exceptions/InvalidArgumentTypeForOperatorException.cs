@@ -15,8 +15,13 @@ public class InvalidArgumentTypeForOperatorException : Exception
     /// </summary>
     public Type DataType { get; init; }
 
-    public InvalidArgumentTypeForOperatorException(string operatorName, Type dataType)
-        : base($"Argument of type {dataType.FullName} is not valid for operator {operatorName}.")
+    /// <summary>
+    /// The type that was expected to be supplied.
+    /// </summary>
+    public Type? ExpectedDataType { get; init; }
+
+    public InvalidArgumentTypeForOperatorException(string operatorName, Type dataType, Type? expectedDataType = null)
+        : base($"Argument of type {dataType.FullName} is not valid for operator {operatorName}.{(expectedDataType != null ? $" Expected {expectedDataType.FullName}." : "")}")
     {
         this.OperatorName = operatorName;
         this.DataType = dataType;

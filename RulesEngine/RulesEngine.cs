@@ -97,8 +97,15 @@ public class RulesEngine
 
         if (Enum.TryParse(operatorName, out ExpressionType binaryOperator))
         {
-            var argumentExpression = Expression.Constant(Convert.ChangeType(argument, propertyType));
-            return Expression.MakeBinary(binaryOperator, objectExpression, argumentExpression);
+            try
+            {
+                var argumentExpression = Expression.Constant(Convert.ChangeType(argument, propertyType));
+                return Expression.MakeBinary(binaryOperator, objectExpression, argumentExpression);
+            }
+            catch (Exception ex) when (ex is FormatException || ex is InvalidCastException || ex is OverflowException)
+            {
+                throw new InvalidArgumentTypeForOperatorException(operatorName, argument.GetType(), expectedDataType: propertyType);
+            }
         }
 
         throw new UnrecognizedOperatorException(operatorName);
