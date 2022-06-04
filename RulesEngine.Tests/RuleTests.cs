@@ -166,4 +166,79 @@ public class RuleTests
             Assert.Empty(rulesEngine.GetMatchingRules(hasNoProperty));
         });
     }
+
+    [Fact]
+    public void CanConsiderMultipleCriteria()
+    {
+        var rule = new Rule("Matches multiple criteria")
+        {
+            new RuleCriterion("RootObject.TestValue", "Equal", "42"),
+            new RuleCriterion("RootObject.TestValue", "GreaterThan", "12"),
+            new RuleCriterion("OtherObject.TestValue", "Equal", "24")
+        };
+
+        var meetsAllCriteria = new
+        {
+            RootObject = new
+            {
+                TestValue = 42
+            },
+            OtherObject = new
+            {
+                TestValue = 24
+            }
+        };
+
+        var meetsTwoCriteria = new
+        {
+            RootObject = new
+            {
+                TestValue = 42
+            },
+            OtherObject = new
+            {
+                TestValue = 11
+            }
+        };
+
+        var meetsOneCriterion = new
+        {
+            RootObject = new
+            {
+                TestValue = 11
+            },
+            OtherObject = new
+            {
+                TestValue = 24
+            }
+        };
+
+        var meetsNoCriteria = new
+        {
+            RootObject = new
+            {
+                TestValue = 11
+            },
+            OtherObject = new
+            {
+                TestValue = 24
+            }
+        };
+
+        var rules = new List<Rule>() { rule };
+        var rulesEngine = new RulesEngine(rules);
+
+        Assert.True(rulesEngine.MatchesRule(meetsAllCriteria, rule));
+        Assert.Single(rulesEngine.GetMatchingRules(meetsAllCriteria));
+        Assert.Equal(rulesEngine.GetMatchingRules(meetsAllCriteria).First(), rule);
+
+        Assert.False(rulesEngine.MatchesRule(meetsTwoCriteria, rule));
+        Assert.Empty(rulesEngine.GetMatchingRules(meetsTwoCriteria));
+
+        Assert.False(rulesEngine.MatchesRule(meetsOneCriterion, rule));
+        Assert.Empty(rulesEngine.GetMatchingRules(meetsOneCriterion));
+
+        Assert.False(rulesEngine.MatchesRule(meetsNoCriteria, rule));
+        Assert.Empty(rulesEngine.GetMatchingRules(meetsNoCriteria));
+    }
 }
