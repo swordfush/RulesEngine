@@ -53,11 +53,31 @@ public class RulesEngine
         return check(value);
     }
 
+    /// <summary>
+    /// Gets an expression that evaluates the provided property path.
+    /// </summary>
+    private static MemberExpression GetExpressionForPropertyPath(ParameterExpression parameterExpression, string propertyPath)
+    {
+        var pathComponents = propertyPath.Split(".");
+
+        Expression objectExpression = parameterExpression;
+
+        foreach (var propertyName in pathComponents)
+        {
+            if (objectExpression.Type.GetProperty(propertyName) == null)
+                throw new InvalidPropertyPathException(parameterExpression.Type, propertyPath, propertyName, objectExpression.Type);
+
+            objectExpression = MemberExpression.Property(objectExpression, propertyName);
+        }
+
+        return (MemberExpression)objectExpression;
+    }
+
     private Func<T, bool> CompileCriterion<T>(IRuleCriterion criterion)
     {
-        // Expression is (<operator> (property (<parameter>) <propertyName>) <value>)
+        // Expression is a lambda, where the body is in the form (<operator> (property (<parameter>) <propertyName>) <value>)
         var parameterExpression = Expression.Parameter(typeof(T));
-        var propertyAccessExpression = MemberExpression.Property(parameterExpression, criterion.PropertyName);
+        var propertyAccessExpression = GetExpressionForPropertyPath(parameterExpression, criterion.PropertyPath);
         var operatorExpression = GetBinaryOperatorExpression(criterion.OperatorName, propertyAccessExpression, criterion.Value);
 
         return Expression.Lambda<Func<T, bool>>(body: operatorExpression, parameters: parameterExpression).Compile();

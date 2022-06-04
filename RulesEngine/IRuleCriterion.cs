@@ -5,7 +5,7 @@
 /// </summary>
 public interface IRuleCriterion
 {
-    public string PropertyName { get; }
+    public string PropertyPath { get; }
     public string OperatorName { get; }
     public string Value { get; }
 }

@@ -119,4 +119,51 @@ public class RuleTests
             rulesEngine.GetMatchingRules(obj);
         });
     }
+
+    [Fact]
+    public void CanAccessSubProperties()
+    {
+        var rule = new Rule("Equal to \"test\"")
+        {
+            new RuleCriterion("RootObject.TestValue", "Equal", "test")
+        };
+
+        var matches = new
+        {
+            RootObject = new {
+                TestValue = "test"
+            }
+        };
+
+        var doesNotMatch = new
+        {
+            RootObject = new {
+                TestValue = "no match"
+            }
+        };
+
+        var hasNoProperty = new
+        {
+            TestValue = "test"
+        };
+
+        var rules = new List<Rule>() { rule };
+        var rulesEngine = new RulesEngine(rules);
+
+        Assert.True(rulesEngine.MatchesRule(matches, rule));
+        Assert.Single(rulesEngine.GetMatchingRules(matches));
+        Assert.Equal(rulesEngine.GetMatchingRules(matches).First(), rule);
+
+        Assert.False(rulesEngine.MatchesRule(doesNotMatch, rule));
+        Assert.Empty(rulesEngine.GetMatchingRules(doesNotMatch));
+
+        Assert.Throws<InvalidPropertyPathException>(() =>
+        {
+            Assert.False(rulesEngine.MatchesRule(hasNoProperty, rule));
+        });
+        Assert.Throws<InvalidPropertyPathException>(() =>
+        {
+            Assert.Empty(rulesEngine.GetMatchingRules(hasNoProperty));
+        });
+    }
 }
