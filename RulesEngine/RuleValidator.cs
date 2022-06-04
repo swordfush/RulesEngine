@@ -18,6 +18,8 @@ public class RuleValidator
     public List<RuleValidationError> ValidateRule(IRule rule)
     {
         if (rule == null) throw new ArgumentNullException(nameof(rule));
+        if (!rule.Criteria.Any()) return new List<RuleValidationError>() { new RuleValidationError("The rule has no criteria.") };
+
         return rule.Criteria.SelectMany(c => ValidateCriterion(c)).ToList();
     }
 
