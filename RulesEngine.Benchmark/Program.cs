@@ -1,5 +1,4 @@
 ﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 using RulesEngine;
 using RulesEngine.Benchmark;
@@ -12,28 +11,28 @@ public class RulesBenchmark
     private readonly Organization organization;
     private readonly List<Rule> rules;
 
-    private readonly RulesEngine.RulesEngine rulesEngine;
-    private readonly RulesEngine<Organization> genericRulesEngine;
+    private readonly RuleEvaluator rulesEngine;
+    private readonly RuleEvaluator<Organization> genericRulesEngine;
 
     public RulesBenchmark()
     {
         this.organization = Organization.FakeData.Generate();
         this.rules = Rule.FakeData.Generate(500);
 
-        this.rulesEngine = new RulesEngine.RulesEngine(this.rules);
-        this.genericRulesEngine = new RulesEngine<Organization>(this.rules);
+        this.rulesEngine = new RuleEvaluator(this.rules);
+        this.genericRulesEngine = new RuleEvaluator<Organization>(this.rules);
     }
 
     [Benchmark]
-    public RulesEngine.RulesEngine InitializeRulesEngine()
+    public RuleEvaluator InitializeRulesEngine()
     {
-        return new RulesEngine.RulesEngine(this.rules);
+        return new RuleEvaluator(this.rules);
     }
 
     [Benchmark]
-    public RulesEngine<Organization> InitializeGenericRulesEngine()
+    public RuleEvaluator<Organization> InitializeGenericRulesEngine()
     {
-        return new RulesEngine<Organization>(this.rules);
+        return new RuleEvaluator<Organization>(this.rules);
     }
 
     [Benchmark]

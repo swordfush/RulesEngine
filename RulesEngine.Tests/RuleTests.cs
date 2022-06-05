@@ -24,7 +24,7 @@ public class RuleTests
         };
 
         var rules = new List<Rule>() { rule };
-        var rulesEngine = new RulesEngine(rules);
+        var rulesEngine = new RuleEvaluator(rules);
 
         Assert.True(rulesEngine.MatchesRule(matches, rule));
         Assert.Single(rulesEngine.GetMatchingRules(matches));
@@ -49,7 +49,7 @@ public class RuleTests
             };
 
             var rules = new List<Rule>() { rule };
-            var rulesEngine = new RulesEngine(rules);
+            var rulesEngine = new RuleEvaluator(rules);
 
             Assert.Throws<InvalidOperatorForPropertyTypeException>(() =>
             {
@@ -78,7 +78,7 @@ public class RuleTests
             };
 
             var rules = new List<Rule>() { rule };
-            var rulesEngine = new RulesEngine(rules);
+            var rulesEngine = new RuleEvaluator(rules);
 
             Assert.Throws<InvalidArgumentTypeForOperatorException>(() =>
             {
@@ -107,7 +107,7 @@ public class RuleTests
         };
 
         var rules = new List<Rule>() { rule };
-        var rulesEngine = new RulesEngine(rules);
+        var rulesEngine = new RuleEvaluator(rules);
 
         Assert.Throws<UnrecognizedOperatorException>(() =>
         {
@@ -148,7 +148,7 @@ public class RuleTests
         };
 
         var rules = new List<Rule>() { rule };
-        var rulesEngine = new RulesEngine(rules);
+        var rulesEngine = new RuleEvaluator(rules);
 
         Assert.True(rulesEngine.MatchesRule(matches, rule));
         Assert.Single(rulesEngine.GetMatchingRules(matches));
@@ -226,7 +226,7 @@ public class RuleTests
         };
 
         var rules = new List<Rule>() { rule };
-        var rulesEngine = new RulesEngine(rules);
+        var rulesEngine = new RuleEvaluator(rules);
 
         Assert.True(rulesEngine.MatchesRule(meetsAllCriteria, rule));
         Assert.Single(rulesEngine.GetMatchingRules(meetsAllCriteria));

@@ -7,9 +7,9 @@ namespace RulesEngine;
 /// Service that determines whether an object matches a set of rules.
 /// </summary>
 /// <remarks>
-/// Prefer <see cref="RulesEngine{T}"/> where the type is known as this caches the compilation of rules.
+/// Prefer <see cref="RuleEvaluator{T}"/> where the type is known as this caches the compilation of rules.
 /// </remarks>
-public class RulesEngine
+public class RuleEvaluator
 {
     private readonly IEnumerable<IRule> rules;
 
@@ -17,7 +17,7 @@ public class RulesEngine
     /// Initialises the engine with a given set of rules.
     /// </summary>
     /// <param name="rules">The rules to assess objects against.</param>
-    public RulesEngine(IEnumerable<IRule> rules)
+    public RuleEvaluator(IEnumerable<IRule> rules)
     {
         this.rules = rules;
     }
@@ -30,7 +30,7 @@ public class RulesEngine
     /// <returns>The list of rules that the object matches.</returns>
     public IEnumerable<IRule> GetMatchingRules<T>(T value)
     {
-        var engine = new RulesEngine<T>(this.rules);
+        var engine = new RuleEvaluator<T>(this.rules);
         return engine.GetMatchingRules(value);
     }
 
@@ -43,7 +43,7 @@ public class RulesEngine
     /// <returns>True if the object matches the rule.</returns>
     public bool MatchesRule<T>(T value, IRule rule)
     {
-        var engine = new RulesEngine<T>(this.rules);
+        var engine = new RuleEvaluator<T>(this.rules);
         return engine.MatchesRule(value, rule);
     }
 }
@@ -52,7 +52,7 @@ public class RulesEngine
 /// Service that determines whether an object matches a set of rules.
 /// </summary>
 /// <typeparam name="T">The type of the objects to be checked.</typeparam>
-public class RulesEngine<T>
+public class RuleEvaluator<T>
 {
     private readonly IDictionary<IRule, Func<T, bool>> rules;
 
@@ -60,7 +60,7 @@ public class RulesEngine<T>
     /// Initialises the engine with a given set of rules.
     /// </summary>
     /// <param name="rules">The rules to assess objects against.</param>
-    public RulesEngine(IEnumerable<IRule> rules)
+    public RuleEvaluator(IEnumerable<IRule> rules)
     {
         this.rules = rules.ToDictionary(r => r, r => CompileRule(r));
     }
