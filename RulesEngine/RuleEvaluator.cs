@@ -188,17 +188,24 @@ public class RuleEvaluator<T>
                 if (!argument.GetType().IsAssignableTo(typeof(string)))
                     throw new InvalidArgumentTypeForOperatorException(operatorName, dataType: argument.GetType());
 
-                return GetMethodCallExpression(objectExpression, propertyType, operatorName, Expression.Constant(argument), Expression.Constant(StringComparison.InvariantCultureIgnoreCase));
+                return GetMethodCallExpression(
+                    objectExpression,
+                    propertyType,
+                    operatorName,
+                    parameterTypes: new[] { typeof(string), typeof(StringComparison) },
+                    parameterValues: new[] { Expression.Constant(argument), Expression.Constant(StringComparison.InvariantCultureIgnoreCase) }
+                );
         }
 
         if (Enum.TryParse(operatorName, out ExpressionType binaryOperator))
         {
             try
             {
-                var argumentExpression = Expression.Constant(Convert.ChangeType(argument, propertyType));
+                var converter = System.ComponentModel.TypeDescriptor.GetConverter(propertyType);
+                var argumentExpression = Expression.Constant(converter.ConvertFrom(argument), propertyType);
                 return Expression.MakeBinary(binaryOperator, objectExpression, argumentExpression);
             }
-            catch (Exception ex) when (ex is FormatException || ex is InvalidCastException || ex is OverflowException)
+            catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException)
             {
                 throw new InvalidArgumentTypeForOperatorException(operatorName, argument.GetType(), expectedDataType: propertyType);
             }
@@ -215,11 +222,11 @@ public class RuleEvaluator<T>
     /// <param name="methodName">The name of the method to call.</param>
     /// <param name="parameters">Parameters to the method. If these are derived from <see cref="Expression"/> then the expression is left as-is. Other values are fed as constants to the method.</param>
     /// <exception cref="InvalidOperatorForPropertyTypeException">Thrown if the method does not exist on the object.</exception>
-    protected static Expression GetMethodCallExpression(MemberExpression objectExpression, Type objectType, string methodName, params object[] parameters)
+    protected static Expression GetMethodCallExpression(MemberExpression objectExpression, Type objectType, string methodName, Type[] parameterTypes, object[] parameterValues)
     {
-        var method = objectType.GetMethod(methodName) ?? throw new InvalidOperatorForPropertyTypeException(methodName, objectType);
+        var method = objectType.GetMethod(methodName, parameterTypes) ?? throw new InvalidOperatorForPropertyTypeException(methodName, objectType);
 
-        var parameterExpressions = parameters
+        var parameterExpressions = parameterValues
             .Select(parameter =>
             {
                 if (parameter is Expression e)

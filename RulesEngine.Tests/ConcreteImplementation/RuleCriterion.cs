@@ -6,9 +6,9 @@ class RuleCriterion : IRuleCriterion
     public string OperatorName { get; set; }
     public string Value { get; set; }
 
-    public RuleCriterion(string propertyName, string operatorName, string value)
+    public RuleCriterion(string propertyPath, string operatorName, string value)
     {
-        PropertyPath = propertyName;
+        PropertyPath = propertyPath;
         OperatorName = operatorName;
         Value = value;
     }
