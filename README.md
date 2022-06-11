@@ -1,14 +1,16 @@
 # RulesEngine
-A rules engine used to evaluate a set of business rules against objects.
+A rules engine used to evaluate a set of user-defined business rules against objects.
 
-It is designed to be easily extensible, so that for instance business rules could be defined by users via an interface and various outcomes implemented as required by the application.
+Rules are defined so that they could easily be entered by non-technical domain experts via a user interface.
+
+The library is designed to be easily extensible and adaptable: the behaviour of the engine can be overriden, and the outcome when rules are matched is entirely up to the implementor.
 
 # Usage
 
 ## Implement IRule and IRuleCriterion
 `IRule` represents a rule to be evaluated, and `IRuleCriterion` is one of the criteria that must be met for a rule to be matched.  Concrete implementations need to be provided for these interfaces in order to use the rule engine.
 
-`IRuleCriterion` is the most important here: each criterion is a binary operation that evaluates the value of a property on the object, and returns a boolean indicating whether the criterion was met.
+`IRuleCriterion` is the most important here: each criterion is an operation that evaluates the value of a property on the object, and returns a boolean indicating whether the criterion was met.
 
 For example, if our object is a `Player`, who has provided an answer indicated by the property `Player.Response.Answer` the property path for the criterion will be `Response.Answer`.  We can then check if this is equal to 42 by using operator "Equal" and value "42".
 
@@ -152,6 +154,7 @@ The `RuleEvaluator` class is able to extended in order to provide your own custo
 To do this inherit from `RuleEvaluator` and override the `GetBinaryOperatorExpression()` method.
 
 # Future possibilities
+* Tighten validation to find type mismatches and useless rules (e.g. nullable property equals "").
 * Support non-string values?
 * Support full expression trees?
 
