@@ -134,13 +134,14 @@ public class RuleEvaluator<T>
 
     private Expression GetExpressionForCriterion(ParameterExpression parameterExpression, IRuleCriterion criterion)
     {
-        // Expression is a binary operator in the form (<operator> (property (<parameter>) <propertyName>) <value>)
+        // Expression is a either a unary or binary operator in the form (<operator> (property (<parameter>) <propertyName>) [value])
         var propertyAccessExpression = GetExpressionForPropertyPath(parameterExpression, criterion.PropertyPath);
-        return GetBinaryOperatorExpression(criterion.OperatorName, propertyAccessExpression, criterion.Value);
+        return GetExpressionForOperator(criterion.OperatorName, propertyAccessExpression, criterion.Value);
     }
 
     /// <summary>
-    /// Gets an expression that evaluates the provided property path.
+    /// Gets an expression that accesses the provided property path.
+    /// For instance if you have a property path <c>Child.GrandChild</c> it will return an expression to return the value of <c>GrandChild</c>.
     /// </summary>
     private static MemberExpression GetExpressionForPropertyPath(ParameterExpression parameterExpression, string propertyPath)
     {
@@ -160,16 +161,16 @@ public class RuleEvaluator<T>
     }
 
     /// <summary>
-    /// Gets a Expression for an operator. Can be overriden to support additional operators.
+    /// Gets an <see cref="Expression"/> for an operator. Can be overriden to support additional operators.
     /// </summary>
     /// <param name="operatorName">The name of the operator.</param>
-    /// <param name="objectExpression">An expression for the object to perform the operator on (as a property access expression).</param>
+    /// <param name="objectExpression">An expression that gets the property to be assessed.</param>
     /// <param name="argument">The argument to the operator.</param>
-    /// <returns>An expression that performs the operator on the object and argument.</returns>
+    /// <returns>An expression that performs the operator on the property and argument.</returns>
     /// <exception cref="ArgumentNullException">Thrown if any of the arguments are null.</exception>
     /// <exception cref="InvalidOperatorForPropertyTypeException">Thrown when the operator provided is not valid for the data type of the object.</exception>
     /// <exception cref="InvalidArgumentTypeForOperatorException">Thrown when the argument provided is not valid for the operator.</exception>
-    protected virtual Expression GetBinaryOperatorExpression(string operatorName, MemberExpression objectExpression, object argument)
+    protected virtual Expression GetExpressionForOperator(string operatorName, MemberExpression objectExpression, object argument)
     {
         if (operatorName == null) throw new ArgumentNullException(nameof(operatorName));
         if (objectExpression == null) throw new ArgumentNullException(nameof(objectExpression));

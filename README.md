@@ -151,10 +151,11 @@ foreach (var validationError in validationErrors)
 # Extending Supported Operations
 The `RuleEvaluator` class is able to extended in order to provide your own custom implementation of operators.
 
-To do this inherit from `RuleEvaluator` and override the `GetBinaryOperatorExpression()` method.
+To do this inherit from `RuleEvaluator` and override the `GetExpressionForOperator()` method.
 
 # Future possibilities
 * Tighten validation to find type mismatches and useless rules (e.g. nullable property equals "").
+* Support DoesNotContain, DoesNotStartWith, DoesNotEndWith.
 * Support non-string values?
 * Support full expression trees?
 
