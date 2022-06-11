@@ -10,7 +10,7 @@ public class RuleTests
     /// <summary>
     /// Tests a single criterion.
     /// </summary>
-    private bool TestCriterion<T>(T testObject, string propertyPath, string operatorName, string value)
+    private bool TestCriterion<T>(T testObject, string propertyPath, string operatorName, string? value)
     {
         var rule = new Rule("")
         {
@@ -26,7 +26,7 @@ public class RuleTests
     /// </summary>
     private bool TestCriterion<T>(T testObject, string propertyPath, string operatorName)
         => TestCriterion<T>(testObject, propertyPath, operatorName, "");
-    
+
     #endregion
 
     /// <summary>
@@ -169,14 +169,16 @@ public class RuleTests
 
         var matches = new
         {
-            RootObject = new {
+            RootObject = new
+            {
                 TestValue = "test"
             }
         };
 
         var doesNotMatch = new
         {
-            RootObject = new {
+            RootObject = new
+            {
                 TestValue = "no match"
             }
         };
@@ -425,7 +427,7 @@ public class RuleTests
     public void SupportsIsTrueAndIsFalseOperators()
     {
         var testObject = new Truthy();
-        
+
         Assert.True(TestCriterion(testObject, "TrueValue", "IsTrue"));
         Assert.False(TestCriterion(testObject, "TrueValue", "IsFalse"));
 
@@ -566,6 +568,9 @@ public class RuleTests
         public Guid? NullNullableGuidValue { get; init; } = null;
     }
 
+    /// <summary>
+    /// Test handling of various data types.
+    /// </summary>
     [Fact]
     public void HandlesVaryingDataTypes()
     {
@@ -598,5 +603,64 @@ public class RuleTests
         Assert.True(TestCriterion(testObject, "GuidValue", "Equal", "79281f39-6f5f-4010-bb91-23558af088f6"));
         Assert.True(TestCriterion(testObject, "NullableGuidValue", "Equal", "79281f39-6f5f-4010-bb91-23558af088f6"));
         Assert.False(TestCriterion(testObject, "NullNullableGuidValue", "Equal", ""));
+    }
+
+    /// <summary>
+    /// Verify that we manage a <c>null</c> criterion argument correctly.
+    /// </summary>
+    [Fact]
+    public void HandlesNullOperatorArgument()
+    {
+        var testObject = new VaryingDataTypes();
+
+        Assert.False(TestCriterion(testObject, "IntValue", "Equal", null));
+        Assert.False(TestCriterion(testObject, "NullableIntValue", "Equal", null));
+        Assert.True(TestCriterion(testObject, "NullNullableIntValue", "Equal", null));
+
+        Assert.True(TestCriterion(testObject, "IntValue", "NotEqual", null));
+        Assert.True(TestCriterion(testObject, "NullableIntValue", "NotEqual", null));
+        Assert.False(TestCriterion(testObject, "NullNullableIntValue", "NotEqual", null));
+
+        Assert.False(TestCriterion(testObject, "IntValue", "GreaterThan", null));
+        Assert.False(TestCriterion(testObject, "NullableIntValue", "GreaterThan", null));
+        Assert.False(TestCriterion(testObject, "NullNullableIntValue", "GreaterThan", null));
+
+        Assert.False(TestCriterion(testObject, "IntValue", "GreaterThanOrEqual", null));
+        Assert.False(TestCriterion(testObject, "NullableIntValue", "GreaterThanOrEqual", null));
+        // Adopt C# behaviour where (null) >= (null) is false
+        // https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/nullable-value-types#:~:text=if%20one%20or%20both%20operands%20are%20null%2C%20the%20result%20is%20false%3B%20otherwise%2C%20the%20contained%20values%20of%20operands%20are%20compared
+        Assert.False(TestCriterion(testObject, "NullNullableIntValue", "GreaterThanOrEqual", null));
+
+        Assert.False(TestCriterion(testObject, "IntValue", "LessThan", null));
+        Assert.False(TestCriterion(testObject, "NullableIntValue", "LessThan", null));
+        Assert.False(TestCriterion(testObject, "NullNullableIntValue", "LessThan", null));
+
+        Assert.False(TestCriterion(testObject, "IntValue", "LessThanOrEqual", null));
+        Assert.False(TestCriterion(testObject, "NullableIntValue", "LessThanOrEqual", null));
+        Assert.False(TestCriterion(testObject, "NullNullableIntValue", "LessThanOrEqual", null));
+
+        Assert.False(TestCriterion(testObject, "StringValue", "Contains", null));
+        Assert.False(TestCriterion(testObject, "NullableStringValue", "Contains", null));
+        Assert.False(TestCriterion(testObject, "NullNullableStringValue", "Contains", null));
+
+        Assert.True(TestCriterion(testObject, "StringValue", "DoesNotContain", null));
+        Assert.True(TestCriterion(testObject, "NullableStringValue", "DoesNotContain", null));
+        Assert.True(TestCriterion(testObject, "NullNullableStringValue", "DoesNotContain", null));
+
+        Assert.False(TestCriterion(testObject, "StringValue", "StartsWith", null));
+        Assert.False(TestCriterion(testObject, "NullableStringValue", "StartsWith", null));
+        Assert.False(TestCriterion(testObject, "NullNullableStringValue", "StartsWith", null));
+
+        Assert.True(TestCriterion(testObject, "StringValue", "DoesNotStartWith", null));
+        Assert.True(TestCriterion(testObject, "NullableStringValue", "DoesNotStartWith", null));
+        Assert.True(TestCriterion(testObject, "NullNullableStringValue", "DoesNotStartWith", null));
+
+        Assert.False(TestCriterion(testObject, "StringValue", "EndsWith", null));
+        Assert.False(TestCriterion(testObject, "NullableStringValue", "EndsWith", null));
+        Assert.False(TestCriterion(testObject, "NullNullableStringValue", "EndsWith", null));
+
+        Assert.True(TestCriterion(testObject, "StringValue", "DoesNotEndWith", null));
+        Assert.True(TestCriterion(testObject, "NullableStringValue", "DoesNotEndWith", null));
+        Assert.True(TestCriterion(testObject, "NullNullableStringValue", "DoesNotEndWith", null));
     }
 }

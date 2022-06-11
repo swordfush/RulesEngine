@@ -155,6 +155,8 @@ To do this inherit from `RuleEvaluator` and override the `GetExpressionForOperat
 
 # Future possibilities
 * Tighten validation to find type mismatches and useless rules (e.g. nullable property equals "").
+* Test nullability operations on object properties.
+* Support list operations: LengthOf, NotEmpty, IsEmpty etc.
 * Support non-string values?
 * Support full expression trees?
 

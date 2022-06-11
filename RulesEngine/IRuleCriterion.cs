@@ -18,5 +18,5 @@ public interface IRuleCriterion
     /// <summary>
     /// The value to compare the 
     /// </summary>
-    public string Value { get; }
+    public string? Value { get; }
 }

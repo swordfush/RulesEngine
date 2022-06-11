@@ -170,11 +170,10 @@ public class RuleEvaluator<T>
     /// <exception cref="ArgumentNullException">Thrown if any of the arguments are null.</exception>
     /// <exception cref="InvalidOperatorForPropertyTypeException">Thrown when the operator provided is not valid for the data type of the object.</exception>
     /// <exception cref="InvalidArgumentTypeForOperatorException">Thrown when the argument provided is not valid for the operator.</exception>
-    protected virtual Expression GetExpressionForOperator(string operatorName, MemberExpression objectExpression, object argument)
+    protected virtual Expression GetExpressionForOperator(string operatorName, MemberExpression objectExpression, string? argument)
     {
         if (operatorName == null) throw new ArgumentNullException(nameof(operatorName));
         if (objectExpression == null) throw new ArgumentNullException(nameof(objectExpression));
-        if (argument == null) throw new ArgumentNullException(nameof(argument));
 
         var propertyType = objectExpression.Type;
 
@@ -185,6 +184,9 @@ public class RuleEvaluator<T>
             case "EndsWith":
                 if (!propertyType.IsAssignableTo(typeof(string)))
                     throw new InvalidOperatorForPropertyTypeException(operatorName, dataType: propertyType);
+
+                if (argument == null)
+                    return Expression.Constant(false);
 
                 if (!argument.GetType().IsAssignableTo(typeof(string)))
                     throw new InvalidArgumentTypeForOperatorException(operatorName, dataType: argument.GetType());
@@ -222,22 +224,43 @@ public class RuleEvaluator<T>
             case nameof(ExpressionType.LessThan):
             case nameof(ExpressionType.LessThanOrEqual):
                 {
-                    try
+                    var binaryOperator = Enum.Parse<ExpressionType>(operatorName);
+
+                    if (argument != null)
                     {
-                        var binaryOperator = Enum.Parse<ExpressionType>(operatorName);
-                        var converter = System.ComponentModel.TypeDescriptor.GetConverter(propertyType);
-                        if (converter is System.ComponentModel.NullableConverter && argument.Equals(""))
+                        try
                         {
-                            // Don't allow an empty string to be converted to a null value by TypeDescriptor
-                            // We should consider it distinctly different and promote use of IsNull checks instead
-                            return Expression.Constant(false);
+                            var converter = System.ComponentModel.TypeDescriptor.GetConverter(propertyType);
+                            if (converter is System.ComponentModel.NullableConverter && argument.Equals(""))
+                            {
+                                // Don't allow an empty string to be converted to a null value by TypeDescriptor
+                                // We should consider it distinctly different and promote use of IsNull checks instead
+                                return Expression.Constant(false);
+                            }
+                            var argumentExpression = Expression.Constant(converter.ConvertFrom(argument), propertyType);
+                            return Expression.MakeBinary(binaryOperator, objectExpression, argumentExpression);
                         }
-                        var argumentExpression = Expression.Constant(converter.ConvertFrom(argument), propertyType);
-                        return Expression.MakeBinary(binaryOperator, objectExpression, argumentExpression);
+                        catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException)
+                        {
+                            throw new InvalidArgumentTypeForOperatorException(operatorName, argument.GetType(), expectedDataType: propertyType);
+                        }
                     }
-                    catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException)
+                    else
                     {
-                        throw new InvalidArgumentTypeForOperatorException(operatorName, argument.GetType(), expectedDataType: propertyType);
+                        // If our property is a non-nullable value type then we know that it can't equate to a null value
+                        if (objectExpression.Type.IsValueType && Nullable.GetUnderlyingType(objectExpression.Type) == null)
+                        {
+                            if (operatorName == nameof(ExpressionType.NotEqual))
+                                return Expression.Constant(true);
+                            else
+                                return Expression.Constant(false);
+                        }
+
+                        // Greater than and less than would never be true when compared to a null value
+                        if (operatorName == nameof(ExpressionType.GreaterThan) || operatorName == nameof(ExpressionType.LessThan))
+                            return Expression.Constant(false);
+
+                        return Expression.MakeBinary(binaryOperator, objectExpression, Expression.Constant(null, propertyType));
                     }
                 }
             case nameof(ExpressionType.IsTrue):
