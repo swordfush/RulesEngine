@@ -196,6 +196,13 @@ public class RuleEvaluator<T>
                     parameterTypes: new[] { typeof(string), typeof(StringComparison) },
                     parameterValues: new[] { Expression.Constant(argument), Expression.Constant(StringComparison.InvariantCultureIgnoreCase) }
                 );
+            case "DoesNotContain":
+                return Expression.Not(GetExpressionForOperator("Contains", objectExpression, argument));
+            case "DoesNotStartWith":
+                return Expression.Not(GetExpressionForOperator("StartsWith", objectExpression, argument));
+            case "DoesNotEndWith":
+                return Expression.Not(GetExpressionForOperator("EndsWith", objectExpression, argument));
+
             case "IsNull":
                 {
                     if (objectExpression.Type.IsValueType && Nullable.GetUnderlyingType(objectExpression.Type) == null)

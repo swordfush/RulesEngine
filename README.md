@@ -155,7 +155,6 @@ To do this inherit from `RuleEvaluator` and override the `GetExpressionForOperat
 
 # Future possibilities
 * Tighten validation to find type mismatches and useless rules (e.g. nullable property equals "").
-* Support DoesNotContain, DoesNotStartWith, DoesNotEndWith.
 * Support non-string values?
 * Support full expression trees?
 

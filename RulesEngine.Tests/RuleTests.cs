@@ -361,6 +361,34 @@ public class RuleTests
     }
 
     /// <summary>
+    /// Verify support for the "DoesNotContain", "DoesNotStartWith", and "DoesNotEndWith" operators.
+    /// </summary>
+    [Fact]
+    public void SupportsNegatedStringOperators()
+    {
+        var testObject = new
+        {
+            Property1 = "test",
+            Property2 = "abcdefg"
+        };
+
+        Assert.False(TestCriterion(testObject, "Property1", "DoesNotContain", "es"));
+        Assert.True(TestCriterion(testObject, "Property1", "DoesNotContain", "efg"));
+        Assert.True(TestCriterion(testObject, "Property2", "DoesNotContain", "es"));
+        Assert.False(TestCriterion(testObject, "Property2", "DoesNotContain", "efg"));
+
+        Assert.False(TestCriterion(testObject, "Property1", "DoesNotStartWith", "te"));
+        Assert.True(TestCriterion(testObject, "Property1", "DoesNotStartWith", "abc"));
+        Assert.True(TestCriterion(testObject, "Property2", "DoesNotStartWith", "te"));
+        Assert.False(TestCriterion(testObject, "Property2", "DoesNotStartWith", "abc"));
+
+        Assert.False(TestCriterion(testObject, "Property1", "DoesNotEndWith", "st"));
+        Assert.True(TestCriterion(testObject, "Property1", "DoesNotEndWith", "efg"));
+        Assert.True(TestCriterion(testObject, "Property2", "DoesNotEndWith", "st"));
+        Assert.False(TestCriterion(testObject, "Property2", "DoesNotEndWith", "efg"));
+    }
+
+    /// <summary>
     /// Verify support for the "IsNull" and "IsNotNull" operators.
     /// </summary>
     [Fact]
