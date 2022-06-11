@@ -21,6 +21,12 @@ public class RuleTests
         return evaluator.MatchesRule(testObject, rule);
     }
 
+    /// <summary>
+    /// Tests a single criterion for a unary operator.
+    /// </summary>
+    private bool TestCriterion<T>(T testObject, string propertyPath, string operatorName)
+        => TestCriterion<T>(testObject, propertyPath, operatorName, "");
+    
     #endregion
 
     /// <summary>
@@ -355,6 +361,65 @@ public class RuleTests
     }
 
     /// <summary>
+    /// Verify support for the "IsNull" and "IsNotNull" operators.
+    /// </summary>
+    [Fact]
+    public void SupportsIsNullAndIsNotNullOperators()
+    {
+        var testObject = new VaryingDataTypes();
+
+        Assert.False(TestCriterion(testObject, "NullableIntValue", "IsNull"));
+        Assert.True(TestCriterion(testObject, "NullNullableIntValue", "IsNull"));
+
+        Assert.True(TestCriterion(testObject, "NullableIntValue", "IsNotNull"));
+        Assert.False(TestCriterion(testObject, "NullNullableIntValue", "IsNotNull"));
+
+        // Non-nullable types should return false to IsNull
+        Assert.False(TestCriterion(testObject, "IntValue", "IsNull"));
+        Assert.True(TestCriterion(testObject, "IntValue", "IsNotNull"));
+    }
+
+    internal class Truthy
+    {
+        public bool TrueValue { get; set; } = true;
+        public bool FalseValue { get; set; } = false;
+        public bool? TrueNullableBooleanValue { get; set; } = true;
+        public bool? FalseNullableBooleanValue { get; set; } = false;
+        public bool? NullNullableBooleanValue { get; set; } = null;
+
+        public int IntValue { get; set; } = 1234;
+    }
+
+    /// <summary>
+    /// Verify support for the "IsTrue" and "IsFalse" operators.
+    /// </summary>
+    [Fact]
+    public void SupportsIsTrueAndIsFalseOperators()
+    {
+        var testObject = new Truthy();
+        
+        Assert.True(TestCriterion(testObject, "TrueValue", "IsTrue"));
+        Assert.False(TestCriterion(testObject, "TrueValue", "IsFalse"));
+
+        Assert.False(TestCriterion(testObject, "FalseValue", "IsTrue"));
+        Assert.True(TestCriterion(testObject, "FalseValue", "IsFalse"));
+
+        Assert.True(TestCriterion(testObject, "TrueNullableBooleanValue", "IsTrue"));
+        Assert.False(TestCriterion(testObject, "TrueNullableBooleanValue", "IsFalse"));
+
+        Assert.False(TestCriterion(testObject, "FalseNullableBooleanValue", "IsTrue"));
+        Assert.True(TestCriterion(testObject, "FalseNullableBooleanValue", "IsFalse"));
+
+        Assert.False(TestCriterion(testObject, "NullNullableBooleanValue", "IsTrue"));
+        Assert.False(TestCriterion(testObject, "NullNullableBooleanValue", "IsFalse"));
+
+        Assert.Throws<InvalidOperatorForPropertyTypeException>(() =>
+        {
+            Assert.False(TestCriterion(testObject, "IntValue", "IsTrue"));
+        });
+    }
+
+    /// <summary>
     /// Verify lenient support for booleans, i.e. "True", "true", and "TRUE" all accepted.
     /// </summary>
     [Fact]
@@ -480,30 +545,30 @@ public class RuleTests
 
         Assert.True(TestCriterion(testObject, "StringValue", "Equal", "test"));
         Assert.True(TestCriterion(testObject, "NullableStringValue", "Equal", "test"));
-        //Assert.True(testCriterion("NullNullableStringValue", "Equal", ""));
+        Assert.False(TestCriterion(testObject, "NullNullableStringValue", "Equal", ""));
 
         Assert.True(TestCriterion(testObject, "IntValue", "Equal", "1234"));
         Assert.True(TestCriterion(testObject, "NullableIntValue", "Equal", "1234"));
-        //Assert.True(TestCriterion(testObject, "NullNullableIntValue", "Equal", ""));
+        Assert.False(TestCriterion(testObject, "NullNullableIntValue", "Equal", ""));
 
         Assert.True(TestCriterion(testObject, "DoubleValue", "Equal", "1234.56"));
         Assert.True(TestCriterion(testObject, "NullableDoubleValue", "Equal", "1234.56"));
-        //Assert.True(TestCriterion(testObject, "NullNullableDoubleValue", "Equal", ""));
+        Assert.False(TestCriterion(testObject, "NullNullableDoubleValue", "Equal", ""));
 
         Assert.True(TestCriterion(testObject, "DecimalValue", "Equal", "1234.56"));
         Assert.True(TestCriterion(testObject, "NullableDecimalValue", "Equal", "1234.56"));
-        //Assert.True(TestCriterion(testObject, "NullNullableDecimalValue", "Equal", ""));
+        Assert.False(TestCriterion(testObject, "NullNullableDecimalValue", "Equal", ""));
 
         Assert.True(TestCriterion(testObject, "BooleanValue", "Equal", "true"));
         Assert.True(TestCriterion(testObject, "NullableBooleanValue", "Equal", "true"));
-        //Assert.True(TestCriterion(testObject, "NullNullableBooleanValue", "Equal", ""));
+        Assert.False(TestCriterion(testObject, "NullNullableBooleanValue", "Equal", ""));
 
         Assert.True(TestCriterion(testObject, "DateTimeValue", "Equal", "2000-01-01"));
         Assert.True(TestCriterion(testObject, "NullableDateTimeValue", "Equal", "2000-01-01"));
-        //Assert.True(TestCriterion(testObject, "NullNullableDateTimeValue", "Equal", ""));
+        Assert.False(TestCriterion(testObject, "NullNullableDateTimeValue", "Equal", ""));
 
         Assert.True(TestCriterion(testObject, "GuidValue", "Equal", "79281f39-6f5f-4010-bb91-23558af088f6"));
         Assert.True(TestCriterion(testObject, "NullableGuidValue", "Equal", "79281f39-6f5f-4010-bb91-23558af088f6"));
-        //Assert.True(TestCriterion(testObject, "NullNullableGuidValue", "Equal", ""));
+        Assert.False(TestCriterion(testObject, "NullNullableGuidValue", "Equal", ""));
     }
 }

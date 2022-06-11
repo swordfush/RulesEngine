@@ -195,23 +195,65 @@ public class RuleEvaluator<T>
                     parameterTypes: new[] { typeof(string), typeof(StringComparison) },
                     parameterValues: new[] { Expression.Constant(argument), Expression.Constant(StringComparison.InvariantCultureIgnoreCase) }
                 );
+            case "IsNull":
+                {
+                    if (objectExpression.Type.IsValueType && Nullable.GetUnderlyingType(objectExpression.Type) == null)
+                        return Expression.Constant(false);
+                    return Expression.Equal(objectExpression, Expression.Constant(null));
+                }
+            case "IsNotNull":
+                {
+                    if (objectExpression.Type.IsValueType && Nullable.GetUnderlyingType(objectExpression.Type) == null)
+                        return Expression.Constant(true);
+                    return Expression.NotEqual(objectExpression, Expression.Constant(null));
+                }
+            case nameof(ExpressionType.Equal):
+            case nameof(ExpressionType.NotEqual):
+            case nameof(ExpressionType.GreaterThan):
+            case nameof(ExpressionType.GreaterThanOrEqual):
+            case nameof(ExpressionType.LessThan):
+            case nameof(ExpressionType.LessThanOrEqual):
+                {
+                    try
+                    {
+                        var binaryOperator = Enum.Parse<ExpressionType>(operatorName);
+                        var converter = System.ComponentModel.TypeDescriptor.GetConverter(propertyType);
+                        if (converter is System.ComponentModel.NullableConverter && argument.Equals(""))
+                        {
+                            // Don't allow an empty string to be converted to a null value by TypeDescriptor
+                            // We should consider it distinctly different and promote use of IsNull checks instead
+                            return Expression.Constant(false);
+                        }
+                        var argumentExpression = Expression.Constant(converter.ConvertFrom(argument), propertyType);
+                        return Expression.MakeBinary(binaryOperator, objectExpression, argumentExpression);
+                    }
+                    catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException)
+                    {
+                        throw new InvalidArgumentTypeForOperatorException(operatorName, argument.GetType(), expectedDataType: propertyType);
+                    }
+                }
+            case nameof(ExpressionType.IsTrue):
+            case nameof(ExpressionType.IsFalse):
+                if (propertyType == typeof(bool))
+                {
+                    var unaryOperator = Enum.Parse<ExpressionType>(operatorName);
+                    return Expression.MakeUnary(unaryOperator, objectExpression, typeof(bool));
+                }
+                else if (propertyType == typeof(bool?))
+                {
+                    var notNullExpression = Expression.NotEqual(objectExpression, Expression.Constant(null));
+                    var unaryOperator = Enum.Parse<ExpressionType>(operatorName);
+                    var valueExpression = Expression.Property(objectExpression, typeof(bool?).GetProperty("Value")!);
+                    var truthyExpression = Expression.MakeUnary(unaryOperator, valueExpression, typeof(bool));
+                    return Expression.AndAlso(notNullExpression, truthyExpression);
+                }
+                else
+                {
+                    throw new InvalidOperatorForPropertyTypeException(operatorName, propertyType);
+                }
+            default:
+                throw new UnrecognizedOperatorException(operatorName);
         }
-
-        if (Enum.TryParse(operatorName, out ExpressionType binaryOperator))
-        {
-            try
-            {
-                var converter = System.ComponentModel.TypeDescriptor.GetConverter(propertyType);
-                var argumentExpression = Expression.Constant(converter.ConvertFrom(argument), propertyType);
-                return Expression.MakeBinary(binaryOperator, objectExpression, argumentExpression);
-            }
-            catch (Exception ex) when (ex is NotSupportedException || ex is ArgumentException)
-            {
-                throw new InvalidArgumentTypeForOperatorException(operatorName, argument.GetType(), expectedDataType: propertyType);
-            }
-        }
-
-        throw new UnrecognizedOperatorException(operatorName);
     }
 
     /// <summary>

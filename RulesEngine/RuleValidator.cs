@@ -68,17 +68,31 @@ public class RuleValidator
     /// </summary>
     protected virtual bool IsKnownOperator(string operatorName)
     {
-        var knownOperators = new[]
+        var validOperators = new[]
         {
             "Contains",
             "StartsWith",
             "EndsWith",
+            "IsNull",
+            "IsNotNull",
         };
 
-        if (knownOperators.Contains(operatorName))
+        if (validOperators.Contains(operatorName))
             return true;
 
-        if (Enum.TryParse(operatorName, out ExpressionType expressionType))
+        var validExpressionOperators = new[]
+        {
+            ExpressionType.Equal,
+            ExpressionType.GreaterThan,
+            ExpressionType.GreaterThanOrEqual,
+            ExpressionType.LessThan,
+            ExpressionType.LessThanOrEqual,
+            ExpressionType.NotEqual,
+            ExpressionType.IsTrue,
+            ExpressionType.IsFalse,
+        };
+
+        if (Enum.TryParse(operatorName, out ExpressionType expressionType) && validExpressionOperators.Contains(expressionType))
             return true;
 
         return false;

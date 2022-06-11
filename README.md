@@ -151,9 +151,7 @@ The `RuleEvaluator` class is able to extended in order to provide your own custo
 
 To do this inherit from `RuleEvaluator` and override the `GetBinaryOperatorExpression()` method.
 
-# TODO
-* Whitelist operations: not all in ExpressionType are valid.
-* Support unary operations.
-* Support non-string values.
+# Future possibilities
+* Support non-string values?
 * Support full expression trees?
 
